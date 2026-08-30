@@ -1,4 +1,5 @@
 from fastapi import FastAPI, File, UploadFile
+from fastapi.responses import FileResponse
 from PIL import Image
 import tensorflow as tf
 import numpy as np
@@ -11,6 +12,10 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# =========================
+# LOAD MODEL
+# =========================
+
 model = tf.keras.models.load_model(
     "model/plant_disease_model.keras"
 )
@@ -19,6 +24,19 @@ with open("model/class_names.json", "r") as f:
     class_names = json.load(f)
 
 
+# =========================
+# WEBSITE
+# =========================
+
+@app.get("/")
+def home():
+    return FileResponse("app/index.html")
+
+
+# =========================
+# HEALTH CHECK
+# =========================
+
 @app.get("/health")
 def health():
     return {
@@ -26,6 +44,10 @@ def health():
         "message": "PlantCare AI API is running"
     }
 
+
+# =========================
+# PREDICTION
+# =========================
 
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
