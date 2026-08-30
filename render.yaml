@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: plantcare-ai
+    runtime: docker
+    repo: https://github.com/Rithikbalan12/plant-disease-capstone.git
+    branch: main
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
