@@ -11,11 +11,6 @@ app = FastAPI(
     version="1.0.0"
 )
 
-
-# =========================
-# LOAD MODEL
-# =========================
-
 model = tf.keras.models.load_model(
     "model/plant_disease_model.keras"
 )
@@ -24,10 +19,6 @@ with open("model/class_names.json", "r") as f:
     class_names = json.load(f)
 
 
-# =========================
-# HEALTH CHECK
-# =========================
-
 @app.get("/health")
 def health():
     return {
@@ -35,10 +26,6 @@ def health():
         "message": "PlantCare AI API is running"
     }
 
-
-# =========================
-# PREDICTION
-# =========================
 
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
@@ -52,12 +39,7 @@ async def predict(file: UploadFile = File(...)):
     image = image.resize((224, 224))
 
     img_array = np.array(image)
-
-    img_array = np.expand_dims(
-        img_array,
-        axis=0
-    )
-
+    img_array = np.expand_dims(img_array, axis=0)
     img_array = img_array / 255.0
 
     predictions = model.predict(
