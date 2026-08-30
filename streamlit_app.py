@@ -4,19 +4,10 @@ import tensorflow as tf
 import numpy as np
 import json
 
-# =========================
-# PAGE CONFIG
-# =========================
-
 st.set_page_config(
     page_title="PlantCare AI",
-    page_icon="🌱",
-    layout="centered"
+    page_icon="🌱"
 )
-
-# =========================
-# LOAD MODEL
-# =========================
 
 @st.cache_resource
 def load_model():
@@ -24,19 +15,13 @@ def load_model():
         "model/plant_disease_model.keras"
     )
 
-
 @st.cache_data
 def load_class_names():
     with open("model/class_names.json", "r") as f:
         return json.load(f)
 
-
 model = load_model()
 class_names = load_class_names()
-
-# =========================
-# UI
-# =========================
 
 st.title("🌱 PlantCare AI")
 st.subheader("Plant Disease Detection")
@@ -49,10 +34,6 @@ uploaded_file = st.file_uploader(
     "Choose a leaf image",
     type=["jpg", "jpeg", "png"]
 )
-
-# =========================
-# PREDICTION
-# =========================
 
 if uploaded_file is not None:
 
@@ -69,12 +50,7 @@ if uploaded_file is not None:
         image_resized = image.resize((224, 224))
 
         img_array = np.array(image_resized)
-
-        img_array = np.expand_dims(
-            img_array,
-            axis=0
-        )
-
+        img_array = np.expand_dims(img_array, axis=0)
         img_array = img_array / 255.0
 
         predictions = model.predict(
@@ -90,9 +66,10 @@ if uploaded_file is not None:
             predicted_index
         ]
 
-        confidence = float(
-            predictions[0][predicted_index]
-        ) * 100
+        confidence = (
+            float(predictions[0][predicted_index])
+            * 100
+        )
 
         st.success(
             f"Prediction: {predicted_class}"
