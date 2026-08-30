@@ -1,27 +1,33 @@
 import streamlit as st
+import requests
 from PIL import Image
-import tensorflow as tf
-import numpy as np
-import json
+import io
+
+# =========================================================
+# PAGE CONFIG
+# =========================================================
 
 st.set_page_config(
     page_title="PlantCare AI",
-    page_icon="🌱"
+    page_icon="🌱",
+    layout="centered"
 )
 
-@st.cache_resource
-def load_model():
-    return tf.keras.models.load_model(
-        "model/plant_disease_model.keras"
-    )
+# =========================================================
+# FASTAPI BACKEND URL
+# =========================================================
 
-@st.cache_data
-def load_class_names():
-    with open("model/class_names.json", "r") as f:
-        return json.load(f)
+import os
 
-model = load_model()
-class_names = load_class_names()
+API_URL = os.getenv(
+    "API_URL",
+    "http://127.0.0.1:8000"
+)
+
+
+# =========================================================
+# HEADER
+# =========================================================
 
 st.title("🌱 PlantCare AI")
 st.subheader("Plant Disease Detection")
@@ -29,6 +35,27 @@ st.subheader("Plant Disease Detection")
 st.write(
     "Upload a plant leaf image and let AI detect the disease."
 )
+
+
+# =========================================================
+# HEALTH CHECK
+# =========================================================
+
+def check_backend_health():
+    """Check if the FastAPI backend is running."""
+    try:
+        response = requests.get(
+            f"{API_URL}/health",
+            timeout=5
+        )
+        return response.status_code == 200
+    except requests.exceptions.ConnectionError:
+        return False
+
+
+# =========================================================
+# FILE UPLOADER
+# =========================================================
 
 uploaded_file = st.file_uploader(
     "Choose a leaf image",
@@ -47,34 +74,73 @@ if uploaded_file is not None:
 
     if st.button("🔍 Predict Disease"):
 
-        image_resized = image.resize((224, 224))
+        # Check backend health first
+        if not check_backend_health():
+            st.error(
+                "Backend API is not available. "
+                "Please make sure the FastAPI server "
+                "is running on " + API_URL
+            )
+        else:
+            # Send image to FastAPI backend
+            with st.spinner("Analyzing your plant..."):
 
-        img_array = np.array(image_resized)
-        img_array = np.expand_dims(img_array, axis=0)
-        img_array = img_array / 255.0
+                # Prepare file for upload
+                img_bytes = io.BytesIO()
+                image.save(img_bytes, format="PNG")
+                img_bytes.seek(0)
 
-        predictions = model.predict(
-            img_array,
-            verbose=0
-        )
+                files = {
+                    "file": (
+                        uploaded_file.name,
+                        img_bytes,
+                        "image/png"
+                    )
+                }
 
-        predicted_index = int(
-            np.argmax(predictions[0])
-        )
+                try:
+                    response = requests.post(
+                        f"{API_URL}/predict",
+                        files=files,
+                        timeout=30
+                    )
 
-        predicted_class = class_names[
-            predicted_index
-        ]
+                    if response.status_code == 200:
+                        data = response.json()
 
-        confidence = (
-            float(predictions[0][predicted_index])
-            * 100
-        )
+                        prediction = data["prediction"]
+                        confidence = data["confidence"]
 
-        st.success(
-            f"Prediction: {predicted_class}"
-        )
+                        st.success(
+                            f"Prediction: {prediction}"
+                        )
 
-        st.info(
-            f"Confidence: {confidence:.2f}%"
-        )
+                        st.info(
+                            f"Confidence: {confidence}%"
+                        )
+
+                    else:
+                        st.error(
+                            "Prediction failed. "
+                            f"Status code: {response.status_code}"
+                        )
+
+                except requests.exceptions.RequestException as e:
+                    st.error(
+                        f"Error connecting to backend: {e}"
+                    )
+
+else:
+    st.info(
+        "Please upload a plant leaf image to get started."
+    )
+
+
+# =========================================================
+# FOOTER
+# =========================================================
+
+st.markdown("---")
+st.caption(
+    "PlantCare AI • End-to-End Machine Learning Deployment"
+)

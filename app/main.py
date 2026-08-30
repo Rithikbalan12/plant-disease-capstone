@@ -1,5 +1,6 @@
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
 import tensorflow as tf
 import numpy as np
@@ -11,6 +12,15 @@ app = FastAPI(
     title="PlantCare AI API",
     description="Plant Disease Detection API",
     version="1.0.0"
+)
+
+# Enable CORS for Streamlit frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # =========================
