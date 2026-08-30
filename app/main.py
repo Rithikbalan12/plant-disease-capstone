@@ -5,6 +5,7 @@ import tensorflow as tf
 import numpy as np
 import json
 import io
+import os
 
 app = FastAPI(
     title="PlantCare AI API",
@@ -30,7 +31,9 @@ with open("model/class_names.json", "r") as f:
 
 @app.get("/")
 def home():
-    return FileResponse("app/index.html")
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    index_path = os.path.join(base_dir, "app", "index.html")
+    return FileResponse(index_path)
 
 
 # =========================
