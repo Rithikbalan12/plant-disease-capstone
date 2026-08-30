@@ -64,3 +64,7 @@ watchdog==6.0.0
 websockets==16.1.1
 wheel==0.48.0
 wrapt==2.3.0
+streamlit
+tensorflow
+pillow
+numpy
