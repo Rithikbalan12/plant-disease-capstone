@@ -31,8 +31,11 @@ with open("model/class_names.json", "r") as f:
 
 @app.get("/")
 def home():
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    index_path = os.path.join(base_dir, "app", "index.html")
+    index_path = os.path.join(
+        os.path.dirname(__file__),
+        "index.html"
+    )
+
     return FileResponse(index_path)
 
 
@@ -64,7 +67,12 @@ async def predict(file: UploadFile = File(...)):
     image = image.resize((224, 224))
 
     img_array = np.array(image)
-    img_array = np.expand_dims(img_array, axis=0)
+
+    img_array = np.expand_dims(
+        img_array,
+        axis=0
+    )
+
     img_array = img_array / 255.0
 
     predictions = model.predict(
